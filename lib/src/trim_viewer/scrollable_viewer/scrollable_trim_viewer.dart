@@ -6,8 +6,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_trimmer/src/trim_viewer/trim_editor_painter.dart';
 import 'package:video_trimmer/src/trim_viewer/trim_area_properties.dart';
+import 'package:video_trimmer/src/trim_viewer/trim_editor_painter.dart';
 import 'package:video_trimmer/src/trim_viewer/trim_editor_properties.dart';
 import 'package:video_trimmer/src/trimmer.dart';
 import 'package:video_trimmer/src/utils/duration_style.dart';
@@ -27,6 +27,9 @@ class ScrollableTrimViewer extends StatefulWidget {
 
   /// For defining the maximum length of the output video.
   final Duration maxVideoLength;
+
+  /// For defining the minimum length of the output video.
+  final Duration minVideoLength;
 
   /// For showing the start and the end point of the
   /// video on top of the trimmer area.
@@ -93,6 +96,8 @@ class ScrollableTrimViewer extends StatefulWidget {
   /// * [maxVideoLength] for specifying the maximum length of the
   /// output video.
   ///
+  /// * [minVideoLength] for specifying the minimum length of the
+  /// output video. By default it is set to `Duration(milliseconds: 0)
   ///
   /// * [showDuration] for showing the start and the end point of the
   /// video on top of the trimmer area. By default it is set to `true`.
@@ -122,6 +127,7 @@ class ScrollableTrimViewer extends StatefulWidget {
     super.key,
     required this.trimmer,
     required this.maxVideoLength,
+    this.minVideoLength = const Duration(milliseconds: 0),
     required this.onThumbnailLoadingComplete,
     this.viewerWidth = 50 * 8,
     this.viewerHeight = 50,
@@ -365,7 +371,7 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
         _videoEndPos =
             preciseAreaDuration.inMilliseconds.toDouble() * trimmerFraction;
         log('Video End Pos: $_videoEndPos ms');
-        widget.onChangeEnd!(_videoEndPos);
+        widget.onChangeEnd?.call(_videoEndPos);
         log('Video Selected Duration: ${_videoEndPos - _videoStartPos}');
 
         // Defining the tween points
@@ -382,7 +388,7 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
           })
           ..addStatusListener((status) {
             if (status == AnimationStatus.completed) {
-              _animationController!.stop();
+              _animationController?.stop();
             }
           });
       });
@@ -395,19 +401,19 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
       final bool isPlaying = videoPlayerController.value.isPlaying;
 
       if (isPlaying) {
-        widget.onChangePlaybackState!(true);
+        widget.onChangePlaybackState?.call(true);
         setState(() {
           _currentPosition =
               videoPlayerController.value.position.inMilliseconds;
 
           if (_currentPosition > _videoEndPos.toInt()) {
             videoPlayerController.pause();
-            widget.onChangePlaybackState!(false);
-            _animationController!.stop();
+            widget.onChangePlaybackState?.call(false);
+            _animationController?.stop();
           } else {
-            if (!_animationController!.isAnimating) {
-              widget.onChangePlaybackState!(true);
-              _animationController!.forward();
+            if (_animationController?.isAnimating == false) {
+              widget.onChangePlaybackState?.call(true);
+              _animationController?.forward();
             }
           }
         });
@@ -416,10 +422,10 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
           if (_animationController != null) {
             if ((_scrubberAnimation?.value ?? 0).toInt() ==
                 (_endPos.dx).toInt()) {
-              _animationController!.reset();
+              _animationController?.reset();
             }
-            _animationController!.stop();
-            widget.onChangePlaybackState!(false);
+            _animationController?.stop();
+            widget.onChangePlaybackState?.call(false);
           }
         }
       }

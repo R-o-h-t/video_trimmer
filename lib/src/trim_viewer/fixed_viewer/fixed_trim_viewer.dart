@@ -26,6 +26,9 @@ class FixedTrimViewer extends StatefulWidget {
   /// For defining the maximum length of the output video.
   final Duration maxVideoLength;
 
+  /// For defining the minimum length of the output video.
+  final Duration minVideoLength;
+
   /// For showing the start and the end point of the
   /// video on top of the trimmer area.
   ///
@@ -87,6 +90,8 @@ class FixedTrimViewer extends StatefulWidget {
   /// * [maxVideoLength] for specifying the maximum length of the
   /// output video.
   ///
+  /// * [minVideoLength] for specifying the minimum length of the
+  /// output video.
   ///
   /// * [showDuration] for showing the start and the end point of the
   /// video on top of the trimmer area. By default it is set to `true`.
@@ -119,6 +124,7 @@ class FixedTrimViewer extends StatefulWidget {
     this.viewerWidth = 50.0 * 8,
     this.viewerHeight = 50,
     this.maxVideoLength = const Duration(milliseconds: 0),
+    this.minVideoLength = const Duration(milliseconds: 0),
     this.showDuration = true,
     this.durationTextStyle = const TextStyle(color: Colors.white),
     this.durationStyle = DurationStyle.FORMAT_HH_MM_SS,
@@ -161,6 +167,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
 
   double? fraction;
   double? maxLengthPixels;
+  double? minLengthPixels;
 
   FixedThumbnailViewer? thumbnailWidget;
 
@@ -197,7 +204,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
       if (trimmerActualWidth == null) return;
       _thumbnailViewerW = trimmerActualWidth;
       _initializeVideoController();
-      videoPlayerController.seekTo(const Duration(milliseconds: 0));
+      // videoPlayerController.seekTo(const Duration(milliseconds: 0));
       _numberOfThumbnails = trimmerActualWidth ~/ _thumbnailViewerH;
       log('numberOfThumbnails: $_numberOfThumbnails');
       log('thumbnailViewerW: $_thumbnailViewerW');
@@ -228,9 +235,20 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
           maxLengthPixels = _thumbnailViewerW;
         }
 
-        _videoEndPos = fraction != null
-            ? _videoDuration.toDouble() * fraction!
-            : _videoDuration.toDouble();
+        // min video length
+        if (widget.minVideoLength > const Duration(milliseconds: 0) &&
+            widget.minVideoLength < totalDuration) {
+          if (widget.minVideoLength < totalDuration) {
+            var f = widget.minVideoLength.inMilliseconds /
+                totalDuration.inMilliseconds;
+
+            minLengthPixels = _thumbnailViewerW * f;
+          }
+        } else {
+          minLengthPixels = 0;
+        }
+
+        _videoEndPos = _videoDuration.toDouble() * (fraction ?? 1);
 
         widget.onChangeEnd!(_videoEndPos);
 
@@ -266,19 +284,19 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
         final bool isPlaying = videoPlayerController.value.isPlaying;
 
         if (isPlaying) {
-          widget.onChangePlaybackState!(true);
+          widget.onChangePlaybackState?.call(true);
           setState(() {
             _currentPosition =
                 videoPlayerController.value.position.inMilliseconds;
 
             if (_currentPosition > _videoEndPos.toInt()) {
               videoPlayerController.pause();
-              widget.onChangePlaybackState!(false);
-              _animationController!.stop();
+              widget.onChangePlaybackState?.call(false);
+              _animationController?.stop();
             } else {
-              if (!_animationController!.isAnimating) {
-                widget.onChangePlaybackState!(true);
-                _animationController!.forward();
+              if (_animationController?.isAnimating == false) {
+                widget.onChangePlaybackState?.call(true);
+                _animationController?.forward();
               }
             }
           });
@@ -290,7 +308,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
                 _animationController!.reset();
               }
               _animationController!.stop();
-              widget.onChangePlaybackState!(false);
+              widget.onChangePlaybackState?.call(false);
             }
           }
         }
@@ -345,7 +363,8 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
       _startCircleSize = widget.editorProperties.circleSizeOnDrag;
       if ((_startPos.dx + details.delta.dx >= 0) &&
           (_startPos.dx + details.delta.dx <= _endPos.dx) &&
-          !(_endPos.dx - _startPos.dx - details.delta.dx > maxLengthPixels!)) {
+          !(_endPos.dx - _startPos.dx - details.delta.dx > maxLengthPixels!) &&
+          !(_endPos.dx - _startPos.dx - details.delta.dx < minLengthPixels!)) {
         _startPos += details.delta;
         _onStartDragged();
       }
@@ -363,7 +382,8 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
       _endCircleSize = widget.editorProperties.circleSizeOnDrag;
       if ((_endPos.dx + details.delta.dx <= _thumbnailViewerW) &&
           (_endPos.dx + details.delta.dx >= _startPos.dx) &&
-          !(_endPos.dx - _startPos.dx + details.delta.dx > maxLengthPixels!)) {
+          !(_endPos.dx - _startPos.dx + details.delta.dx > maxLengthPixels!) &&
+          !(_endPos.dx - _startPos.dx + details.delta.dx < minLengthPixels!)) {
         _endPos += details.delta;
         _onEndDragged();
       }
@@ -396,24 +416,20 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
     setState(() {
       _startCircleSize = widget.editorProperties.circleSize;
       _endCircleSize = widget.editorProperties.circleSize;
-      if (_dragType == EditorDragType.right) {
-        videoPlayerController
-            .seekTo(Duration(milliseconds: _videoEndPos.toInt()));
-      } else {
-        videoPlayerController
-            .seekTo(Duration(milliseconds: _videoStartPos.toInt()));
-      }
+
+      videoPlayerController
+          .seekTo(Duration(milliseconds: _videoStartPos.toInt()));
     });
   }
 
   @override
   void dispose() {
     videoPlayerController.pause();
-    widget.onChangePlaybackState!(false);
+    widget.onChangePlaybackState?.call(false);
     if (_videoFile != null) {
       videoPlayerController.setVolume(0.0);
       videoPlayerController.dispose();
-      widget.onChangePlaybackState!(false);
+      widget.onChangePlaybackState?.call(false);
     }
     super.dispose();
   }
@@ -427,37 +443,6 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          widget.showDuration
-              ? SizedBox(
-                  width: _thumbnailViewerW,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.max,
-                      children: <Widget>[
-                        Text(
-                          Duration(milliseconds: _videoStartPos.toInt())
-                              .format(widget.durationStyle),
-                          style: widget.durationTextStyle,
-                        ),
-                        videoPlayerController.value.isPlaying
-                            ? Text(
-                                Duration(milliseconds: _currentPosition.toInt())
-                                    .format(widget.durationStyle),
-                                style: widget.durationTextStyle,
-                              )
-                            : Container(),
-                        Text(
-                          Duration(milliseconds: _videoEndPos.toInt())
-                              .format(widget.durationStyle),
-                          style: widget.durationTextStyle,
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : Container(),
           CustomPaint(
             foregroundPainter: TrimEditorPainter(
               startPos: _startPos,
@@ -486,6 +471,37 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
               ),
             ),
           ),
+          widget.showDuration
+              ? SizedBox(
+                  width: _thumbnailViewerW,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.max,
+                      children: <Widget>[
+                        Text(
+                          Duration(milliseconds: _videoStartPos.toInt())
+                              .format(widget.durationStyle),
+                          style: widget.durationTextStyle,
+                        ),
+                        videoPlayerController.value.isPlaying
+                            ? Text(
+                                Duration(milliseconds: _currentPosition.toInt())
+                                    .format(widget.durationStyle),
+                                style: widget.durationTextStyle,
+                              )
+                            : Container(),
+                        Text(
+                          Duration(milliseconds: _videoEndPos.toInt())
+                              .format(widget.durationStyle),
+                          style: widget.durationTextStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Container(),
         ],
       ),
     );
