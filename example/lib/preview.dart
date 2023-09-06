@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:example/video_view.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -40,17 +41,11 @@ class _PreviewState extends State<Preview> {
         title: const Text("Preview"),
       ),
       body: Center(
-        child: AspectRatio(
-          aspectRatio: _controller.value.aspectRatio,
           child: _controller.value.isInitialized
-              ? VideoPlayer(_controller)
-              : const Center(
-                  child: CircularProgressIndicator(
-                    backgroundColor: Colors.white,
-                  ),
-                ),
-        ),
-      ),
+              ? VideoView(_controller)
+              : const CircularProgressIndicator(
+                  backgroundColor: Colors.white,
+                )),
     );
   }
 }

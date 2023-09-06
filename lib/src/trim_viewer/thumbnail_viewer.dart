@@ -5,25 +5,27 @@ import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-class FixedThumbnailViewer extends StatelessWidget {
+class ThumbnailViewer extends StatelessWidget {
   final File videoFile;
   final int videoDuration;
   final double thumbnailHeight;
+  final double thumbnailWidth;
   final BoxFit fit;
   final int numberOfThumbnails;
-  final VoidCallback onThumbnailLoadingComplete;
+  final VoidCallback? onThumbnailLoadingComplete;
   final int quality;
 
   /// For showing the thumbnails generated from the video,
   /// like a frame by frame preview
-  const FixedThumbnailViewer({
+  const ThumbnailViewer({
     Key? key,
     required this.videoFile,
     required this.videoDuration,
     required this.thumbnailHeight,
+    required this.thumbnailWidth,
     required this.numberOfThumbnails,
     required this.fit,
-    required this.onThumbnailLoadingComplete,
+    this.onThumbnailLoadingComplete,
     this.quality = 75,
   }) : super(key: key);
 
@@ -53,7 +55,7 @@ class FixedThumbnailViewer extends StatelessWidget {
       }
       byteList.add(bytes);
       if (byteList.length == numberOfThumbnails) {
-        onThumbnailLoadingComplete();
+        onThumbnailLoadingComplete?.call();
       }
       yield byteList;
     }
@@ -72,7 +74,7 @@ class FixedThumbnailViewer extends StatelessWidget {
               numberOfThumbnails,
               (index) => SizedBox(
                 height: thumbnailHeight,
-                width: thumbnailHeight,
+                width: thumbnailWidth,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [

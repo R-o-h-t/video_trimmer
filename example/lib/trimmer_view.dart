@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:example/preview.dart';
+import 'package:example/video_view.dart';
 import 'package:flutter/material.dart';
 import 'package:video_trimmer/video_trimmer.dart';
 
@@ -87,7 +88,7 @@ class _TrimmerViewState extends State<TrimmerView> {
                   child: const Text("SAVE"),
                 ),
                 Expanded(
-                  child: VideoViewer(trimmer: _trimmer),
+                  child: VideoView(_trimmer.videoPlayerController!),
                 ),
                 Center(
                   child: Padding(
@@ -95,17 +96,15 @@ class _TrimmerViewState extends State<TrimmerView> {
                     child: TrimViewer(
                       trimmer: _trimmer,
                       viewerHeight: 50.0,
+                      showDuration: false,
                       viewerWidth: MediaQuery.of(context).size.width,
-                      durationStyle: DurationStyle.FORMAT_MM_SS,
-                      maxVideoLength: const Duration(seconds: 10),
+                      maxVideoLength: const Duration(seconds: 20),
+                      minVideoLength: const Duration(seconds: 6),
                       editorProperties: TrimEditorProperties(
                         borderPaintColor: Colors.yellow,
                         borderWidth: 4,
                         borderRadius: 5,
                         circlePaintColor: Colors.yellow.shade800,
-                      ),
-                      areaProperties: TrimAreaProperties.edgeBlur(
-                        thumbnailQuality: 10,
                       ),
                       onChangeStart: (value) => _startValue = value,
                       onChangeEnd: (value) => _endValue = value,

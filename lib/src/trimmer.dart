@@ -41,7 +41,8 @@ class Trimmer {
   Future<void> loadVideo({required File videoFile}) async {
     currentVideoFile = videoFile;
     if (videoFile.existsSync()) {
-      _videoPlayerController = VideoPlayerController.file(currentVideoFile!);
+      _videoPlayerController = VideoPlayerController.file(currentVideoFile!,
+          videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true));
       await _videoPlayerController!.initialize().then((_) {
         _controller.add(TrimmerEvent.initialized);
       });
