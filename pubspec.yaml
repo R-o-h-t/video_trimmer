@@ -11,15 +11,19 @@ dependencies:
     sdk: flutter
 
   video_player: ^2.4.7
-  ffmpeg_kit_flutter_https_gpl: ^5.1.0-LTS
-  video_thumbnail: ^0.5.3
+  ffmpeg_kit_flutter_https_gpl: ^6.0.3
+  #A personal commit to make this package work, until the PR is accepted.
+  video_thumbnail:
+    git:
+      url: https://github.com/justsoft/video_thumbnail.git
+      ref: dd3e74ea02601eec9397cd2d9dde7ee6b6d50c2a
   path_provider: ^2.1.1
-  intl: ^0.18.1
+  intl: ^0.19.0
   path: ^1.8.3
   transparent_image: ^2.0.1
 
 dev_dependencies:
-  flutter_lints: ^2.0.1
-  lints: ^2.0.1
+  flutter_lints: ^3.0.1
+  lints: ^3.0.0
 
 flutter:
