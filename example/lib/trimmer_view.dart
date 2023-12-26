@@ -54,16 +54,23 @@ class _TrimmerViewState extends State<TrimmerView> {
     );
   }
 
+  void _onBackPressed(bool canPop) {
+    if (Navigator.of(context).userGestureInProgress) {
+      setState(() {
+        canPop = false;
+      });
+    } else {
+      setState(() {
+        canPop = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (Navigator.of(context).userGestureInProgress) {
-          return false;
-        } else {
-          return true;
-        }
-      },
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (canPop) => _onBackPressed(canPop),
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
