@@ -17,7 +17,7 @@ dependencies:
   video_thumbnail:
     git:
       url: https://github.com/justsoft/video_thumbnail.git
-      ref: dd3e74ea02601eec9397cd2d9dde7ee6b6d50c2a
+      ref: 9fb284cfd21a2040d794c4eb3197975fae741111
   path_provider: ^2.1.1
   intl: ^0.18.0
   path: ^1.8.3
